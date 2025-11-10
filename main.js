@@ -1,16 +1,16 @@
 // main.js — bootstrap, scheduler, and event emitter
-(async function(){
-  const cfg = await fetch('config.json').then(r=>r.json()).catch(()=>({}));
+(async function () {
+  const cfg = await fetch('config.json').then(r => r.json()).catch(() => ({}));
   const TICK_MS = cfg.tick_ms || 250;
   const sessionDur = (cfg.session_duration_s || 300) * 1000;
 
   // small helper: emit to parent and also to local console & UI log
-  function emitEvent(obj){
-    const envelope = {type:'MATB_EVENT', payload:obj};
-    try{ window.parent.postMessage(envelope, '*'); }catch(e){}
+  function emitEvent(obj) {
+    const envelope = { type: 'MATB_EVENT', payload: obj };
+    try { window.parent.postMessage(envelope, '*'); } catch (e) { }
     console.log('MATB_EVENT', envelope);
     const la = document.getElementById('log-area');
-    if(la) la.textContent = JSON.stringify(envelope.payload);
+    if (la) la.textContent = JSON.stringify(envelope.payload);
   }
 
   // expose globally for modules
@@ -19,7 +19,7 @@
   window.MATB.cfg = cfg;
 
   // Instantiate tasks after DOM content
-  function onReady(){
+  function onReady() {
     window.MATB.resman = new Resman(window.MATB.cfg.resman);
     window.MATB.sysmon = new Sysmon(window.MATB.cfg.sysmon);
 
@@ -35,17 +35,17 @@
       if (running) return;
       running = true; startTs = performance.now();
       statusText.textContent = 'running';
-      window.MATB.emit({task:'SESSION', event:'start', timestamp:performance.now()});
+      window.MATB.emit({ task: 'SESSION', event: 'start', timestamp: performance.now() });
       // start both tasks
       window.MATB.resman.start();
       window.MATB.sysmon.start();
       // scheduler
-      tickHandle = setInterval(()=>{
+      tickHandle = setInterval(() => {
         const now = performance.now();
-        window.MATB.resman.update(TICK_MS/1000);
-        window.MATB.sysmon.update(TICK_MS/1000);
+        window.MATB.resman.update(TICK_MS / 1000);
+        window.MATB.sysmon.update(TICK_MS / 1000);
         // stop after duration
-        if (now - startTs > sessionDur){
+        if (now - startTs > sessionDur) {
           stopBtn.click();
         }
       }, TICK_MS);
@@ -58,7 +58,7 @@
       clearInterval(tickHandle);
       window.MATB.resman.stop();
       window.MATB.sysmon.stop();
-      window.MATB.emit({task:'SESSION', event:'end', timestamp:performance.now()});
+      window.MATB.emit({ task: 'SESSION', event: 'end', timestamp: performance.now() });
     };
 
     // start in editor only if user wants
@@ -71,33 +71,33 @@
 
 // --- Communication bridge: listen for parent commands ---
 window.addEventListener("message", (event) => {
-    const data = event.data;
-    if (!data || !data.command) return;
+  const data = event.data;
+  if (!data || !data.command) return;
 
-    switch (data.command) {
-        case "start":
-            console.log("[MATB] Start command received");
-            startTasks();  // function that triggers RESMAN + SYSMON
-            window.parent.postMessage({ task: "MATB", event: "started", timestamp: performance.now() }, "*");
-            break;
-        case "stop":
-            console.log("[MATB] Stop command received");
-            stopTasks();   // function that stops both tasks
-            window.parent.postMessage({ task: "MATB", event: "stopped", timestamp: performance.now() }, "*");
-            break;
-        default:
-            console.warn("[MATB] Unknown command:", data.command);
-    }
+  switch (data.command) {
+    case "start":
+      console.log("[MATB] Start command received");
+      startTasks();  // function that triggers RESMAN + SYSMON
+      window.parent.postMessage({ task: "MATB", event: "started", timestamp: performance.now() }, "*");
+      break;
+    case "stop":
+      console.log("[MATB] Stop command received");
+      stopTasks();   // function that stops both tasks
+      window.parent.postMessage({ task: "MATB", event: "stopped", timestamp: performance.now() }, "*");
+      break;
+    default:
+      console.warn("[MATB] Unknown command:", data.command);
+  }
 });
 
 
 function startTasks() {
-    resman.start();
-    sysmon.start();
+  resman.start();
+  sysmon.start();
 }
 
 function stopTasks() {
-    resman.stop();
-    sysmon.stop();
+  resman.stop();
+  sysmon.stop();
 }
 

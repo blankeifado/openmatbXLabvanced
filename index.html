@@ -1,46 +1,49 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MATB-lite — RESMAN + SYSMON</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MATB-lite — RESMAN + SYSMON</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div id="app">
-<header>
-<h1>MATB-lite — RESMAN + SYSMON</h1>
-<div id="status">Status: <span id="status-text">stopped</span></div>
-</header>
+    <div id="app">
+        <header>
+            <h1>MATB-lite — RESMAN + SYSMON</h1>
+            <div id="status">Status: <span id="status-text">stopped</span></div>
+        </header>
 
 
-<main>
-<section id="resman" class="panel">
-<h2>RESMAN (Resource Management)</h2>
-<div id="tanks"></div>
-<div id="pumps"></div>
-</section>
+        <main>
+            <section id="resman" class="panel">
+                <h2>RESMAN (Resource Management)</h2>
+                <div id="tanks"></div>
+                <div id="pumps"></div>
+            </section>
 
 
-<section id="sysmon" class="panel">
-<h2>SYSMON (System Monitoring)</h2>
-<div id="gauges"></div>
-<div id="sysmon-buttons"></div>
-</section>
-</main>
+            <section id="sysmon" class="panel">
+                <h2>SYSMON (System Monitoring)</h2>
+                <div id="gauges"></div>
+                <div id="sysmon-buttons"></div>
+            </section>
+        </main>
 
 
-<footer>
-<button id="start-btn">Start</button>
-<button id="stop-btn">Stop</button>
-<div id="log-area"></div>
-</footer>
-</div>
+        <footer>
+            <button id="start-btn">Start</button>
+            <button id="stop-btn">Stop</button>
+            <div id="log-area"></div>
+        </footer>
+    </div>
 
 
-<script src="main.js"></script>
-<script src="resman.js"></script>
-<script src="sysmon.js"></script>
-<script src="labvanced_listener.js"></script>
+    <script src="main.js"></script>
+    <script src="resman.js"></script>
+    <script src="sysmon.js"></script>
+    <script src="labvanced_listener.js"></script>
 </body>
+
 </html>

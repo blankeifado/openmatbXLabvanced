@@ -1,26 +1,167 @@
-:root{--bg:#0f1720;--panel:#111827;--accent:#22c1c3;--muted:#9ca3af;--danger:#ff6b6b}
-html,body,#app{height:100%;margin:0;font-family:Inter,Segoe UI,Arial;background:var(--bg);color:#e6eef6}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
-h1{font-size:16px;margin:0}
-main{display:flex;gap:12px;padding:18px}
-.panel{flex:1;background:var(--panel);padding:12px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
-#tanks{display:flex;gap:12px}
-.tank{width:140px;padding:8px;background:linear-gradient(180deg,#0b1220,#0b1626);border-radius:6px;border:1px solid rgba(255,255,255,0.03)}
-.tank .bar{height:180px;background:#06101a;border-radius:6px;position:relative;overflow:hidden;margin-bottom:8px}
-.tank .level{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#2fb6ff,#106fa8);transition:height 0.18s linear}
-.tank .meta{font-size:13px;color:var(--muted)}
-#pumps{display:flex;gap:8px;margin-top:8px}
-.pump{padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;background:#0b1220}
-.pump.on{background:linear-gradient(90deg,#ffd27a,#ffb56b);color:#111}
-#gauges{display:flex;gap:12px}
-.gauge{width:120px;padding:8px;background:#081122;border-radius:6px;text-align:center}
-.gauge .bar{height:18px;background:#183046;border-radius:6px;position:relative;margin-top:8px}
-.gauge .marker{position:absolute;top:-4px;height:26px;width:6px;border-radius:3px;background:#7fc7ff}
-.gauge.alarm .marker{background:var(--danger)}
-footer{display:flex;align-items:center;gap:12px;padding:12px;border-top:1px solid rgba(255,255,255,0.03)}
-button{background:#0b1220;border:1px solid rgba(255,255,255,0.03);color:#e6eef6;padding:8px 12px;border-radius:6px}
-#log-area{font-family:monospace;font-size:11px;color:var(--muted);margin-left:8px}
-#status-text{font-weight:600}
+:root {
+    --bg: #0f1720;
+    --panel: #111827;
+    --accent: #22c1c3;
+    --muted: #9ca3af;
+    --danger: #ff6b6b
+}
+
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+    font-family: Inter, Segoe UI, Arial;
+    background: var(--bg);
+    color: #e6eef6
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03)
+}
+
+h1 {
+    font-size: 16px;
+    margin: 0
+}
+
+main {
+    display: flex;
+    gap: 12px;
+    padding: 18px
+}
+
+.panel {
+    flex: 1;
+    background: var(--panel);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6)
+}
+
+#tanks {
+    display: flex;
+    gap: 12px
+}
+
+.tank {
+    width: 140px;
+    padding: 8px;
+    background: linear-gradient(180deg, #0b1220, #0b1626);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.03)
+}
+
+.tank .bar {
+    height: 180px;
+    background: #06101a;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 8px
+}
+
+.tank .level {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, #2fb6ff, #106fa8);
+    transition: height 0.18s linear
+}
+
+.tank .meta {
+    font-size: 13px;
+    color: var(--muted)
+}
+
+#pumps {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px
+}
+
+.pump {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    background: #0b1220
+}
+
+.pump.on {
+    background: linear-gradient(90deg, #ffd27a, #ffb56b);
+    color: #111
+}
+
+#gauges {
+    display: flex;
+    gap: 12px
+}
+
+.gauge {
+    width: 120px;
+    padding: 8px;
+    background: #081122;
+    border-radius: 6px;
+    text-align: center
+}
+
+.gauge .bar {
+    height: 18px;
+    background: #183046;
+    border-radius: 6px;
+    position: relative;
+    margin-top: 8px
+}
+
+.gauge .marker {
+    position: absolute;
+    top: -4px;
+    height: 26px;
+    width: 6px;
+    border-radius: 3px;
+    background: #7fc7ff
+}
+
+.gauge.alarm .marker {
+    background: var(--danger)
+}
+
+footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03)
+}
+
+button {
+    background: #0b1220;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    color: #e6eef6;
+    padding: 8px 12px;
+    border-radius: 6px
+}
+
+#log-area {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 8px
+}
+
+#status-text {
+    font-weight: 600
+}
 
 
-@media(max-width:900px){main{flex-direction:column}}
+@media(max-width:900px) {
+    main {
+        flex-direction: column
+    }
+}
