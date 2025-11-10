@@ -1,8 +1,7 @@
 \# MATB-lite (RESMAN + SYSMON)
 
 
-
-This repo contains a small browser-hostable implementation of two MATB-II subtasks: RESMAN and SYSMON.
+ChatGPT was asked to make a web/iframe-compatible task of resman and sysmon, taken from https://github.com/juliencegarra/OpenMATB
 
 
 
