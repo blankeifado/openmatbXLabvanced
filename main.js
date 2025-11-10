@@ -90,7 +90,6 @@ window.addEventListener("message", (event) => {
   }
 });
 
-
 function startTasks() {
   resman.start();
   sysmon.start();
