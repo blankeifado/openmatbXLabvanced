@@ -1,0 +1,19 @@
+{
+"tick_ms": 250,
+"resman":{
+"tanks":[
+{"name":"Tank A","init":0.5,"min":0.25,"max":0.75},
+{"name":"Tank B","init":0.5,"min":0.25,"max":0.75}
+],
+"consumption_rate":0.2,
+"pump_strength":0.28,
+"pump_count":4
+},
+"sysmon":{
+"gauge_count":4,
+"alarm_interval_min_s":20,
+"alarm_interval_max_s":40,
+"alarm_ack_timeout_s":5
+},
+"session_duration_s":300
+}
