@@ -1,4 +1,15 @@
 // resman.js — two tanks + pumps
+function Resman(cfg){
+cfg = cfg || {};
+this.tanks = (cfg.tanks || [{name:'Tank A',init:0.5,min:0.25,max:0.75},{name:'Tank B',init:0.5,min:0.25,max:0.75}]).map(t=>({
+name:t.name, level:(t.init||0.5), min:t.min, max:t.max, violating:false
+}));
+this.consumption = cfg.consumption_rate || 0.2; // units per second (split across tanks)
+this.pumpStrength = cfg.pump_strength || 0.28; // units per second added when pump on
+this.pumpCount = cfg.pump_count || 4;
+
+
+// create UI
 this.pumpStates = new Array(this.pumpCount).fill(false);
 this._createUI();
 }
@@ -77,14 +88,4 @@ if (levEl) levEl.style.height = (t.level*100).toFixed(1) + '%';
 if (valEl) valEl.textContent = t.level.toFixed(2);
 
 
-const out = (t.level < t.min) || (t.level > t.max);
-if (out && !t.violating){
-t.violating = true;
-window.MATB.emit({task:'RESMAN', event:'violation_start', tank:t.name, level:t.level, timestamp:performance.now()});
-}
-if (!out && t.violating){
-t.violating = false;
-window.MATB.emit({task:'RESMAN', event:'violation_end', tank:t.name, level:t.level, timestamp:performance.now()});
-}
-});
 };
