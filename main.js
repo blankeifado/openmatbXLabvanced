@@ -75,3 +75,34 @@ window.MATB.emit({task:'SESSION', event:'end', timestamp:performance.now()});
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
 else onReady();
 })();
+
+// --- Communication bridge: listen for parent commands ---
+window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || !data.command) return;
+
+    switch (data.command) {
+        case "start":
+            console.log("[MATB] Start command received");
+            startTasks();  // function that triggers RESMAN + SYSMON
+            window.parent.postMessage({ task: "MATB", event: "started", timestamp: performance.now() }, "*");
+            break;
+        case "stop":
+            console.log("[MATB] Stop command received");
+            stopTasks();   // function that stops both tasks
+            window.parent.postMessage({ task: "MATB", event: "stopped", timestamp: performance.now() }, "*");
+            break;
+        default:
+            console.warn("[MATB] Unknown command:", data.command);
+    }
+});
+
+function startTasks() {
+    resman.start();
+    sysmon.start();
+}
+
+function stopTasks() {
+    resman.stop();
+    sysmon.stop();
+}
