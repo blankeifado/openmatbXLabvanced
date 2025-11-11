@@ -24,8 +24,8 @@
     window.MATB.sysmon = new Sysmon(window.MATB.cfg.sysmon);
 
     // wire UI buttons
-    const startBtn = document.getElementById('start-btn');
-    const stopBtn = document.getElementById('stop-btn');
+    //const startBtn = document.getElementById('start-btn');
+    //const stopBtn = document.getElementById('stop-btn');
     const statusText = document.getElementById('status-text');
     let running = false;
     let startTs = 0;
@@ -91,12 +91,38 @@ window.addEventListener("message", (event) => {
 });
 
 function startTasks() {
-  resman.start();
-  sysmon.start();
+  //resman.start();
+  //sysmon.start();
+
+  if (running) return;
+  running = true; startTs = performance.now();
+  statusText.textContent = 'running';
+  window.MATB.emit({ task: 'SESSION', event: 'start', timestamp: performance.now() });
+  // start both tasks
+  window.MATB.resman.start();
+  window.MATB.sysmon.start();
+  // scheduler
+  tickHandle = setInterval(() => {
+    const now = performance.now();
+    window.MATB.resman.update(TICK_MS / 1000);
+    window.MATB.sysmon.update(TICK_MS / 1000);
+    // stop after duration
+    if (now - startTs > sessionDur) {
+      stopBtn.click();
+    }
+  }, TICK_MS);
 }
 
 function stopTasks() {
-  resman.stop();
-  sysmon.stop();
+  //resman.stop();
+  //sysmon.stop();
+
+  if (!running) return;
+  running = false;
+  statusText.textContent = 'stopped';
+  clearInterval(tickHandle);
+  window.MATB.resman.stop();
+  window.MATB.sysmon.stop();
+  window.MATB.emit({ task: 'SESSION', event: 'end', timestamp: performance.now() });
 }
 
