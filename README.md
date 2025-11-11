@@ -1,7 +1,9 @@
-\# MATB-lite (RESMAN + SYSMON)
+\# OpenMATB x Labvanced (RESMAN + SYSMON)
 
 
-web/iframe-compatible task of resman and sysmon, taken from https://github.com/juliencegarra/OpenMATB
+Web/iFrame-compatible task of OpenMTB/resman and OpenMATB/sysmon, to be used in Labvanced experiment environment
+Converted from Julien Cegarra´s Python OpenMATB (https://github.com/juliencegarra/OpenMATB)
+
 
 \## Files
 \- `index.html` — Main page to host.
