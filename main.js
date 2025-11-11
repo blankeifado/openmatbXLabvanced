@@ -19,11 +19,15 @@
   window.MATB.cfg = cfg;
 
   // Instantiate tasks after DOM content
-let initialized = false;
-function onReady() {
+  let initialized = false;
+  let running = false;
+  let startTs = 0;
+  let tickHandle = null;
+
+
+  function onReady() {
     if (initialized) return;
     initialized = true;
-    console.log("MATB onReady called");
     window.MATB.resman = new Resman(window.MATB.cfg.resman);
     window.MATB.sysmon = new Sysmon(window.MATB.cfg.sysmon);
 
@@ -31,9 +35,7 @@ function onReady() {
     //const startBtn = document.getElementById('start-btn');
     //const stopBtn = document.getElementById('stop-btn');
     const statusText = document.getElementById('status-text');
-    let running = false;
-    let startTs = 0;
-    let tickHandle = null;
+
 
     /*startBtn.onclick = () => {
       if (running) return;
@@ -68,13 +70,13 @@ function onReady() {
     // start in editor only if user wants
   }
 
-// Always try immediately:
-if (document.readyState === "complete" || document.readyState === "interactive") {
+  // Always try immediately:
+  if (document.readyState === "complete" || document.readyState === "interactive") {
     onReady();
-} else {
+  } else {
     document.addEventListener("DOMContentLoaded", onReady);
     window.addEventListener("load", onReady);
-}
+  }
 })();
 
 
