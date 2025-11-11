@@ -19,7 +19,11 @@
   window.MATB.cfg = cfg;
 
   // Instantiate tasks after DOM content
-  function onReady() {
+let initialized = false;
+function onReady() {
+    if (initialized) return;
+    initialized = true;
+    console.log("MATB onReady called");
     window.MATB.resman = new Resman(window.MATB.cfg.resman);
     window.MATB.sysmon = new Sysmon(window.MATB.cfg.sysmon);
 
@@ -64,8 +68,13 @@
     // start in editor only if user wants
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
-  else onReady();
+// Always try immediately:
+if (document.readyState === "complete" || document.readyState === "interactive") {
+    onReady();
+} else {
+    document.addEventListener("DOMContentLoaded", onReady);
+    window.addEventListener("load", onReady);
+}
 })();
 
 
