@@ -20,6 +20,7 @@
 
   // Instantiate tasks after DOM content
   function onReady() {
+    console.log("onready function called");
     window.MATB.resman = new Resman(window.MATB.cfg.resman);
     window.MATB.sysmon = new Sysmon(window.MATB.cfg.sysmon);
 
