@@ -1,127 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SYSMON - Accurate Implementation</title>
+    <title>SYSMON - Labvanced Optimized</title>
     <style>
         body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 500px; height: 450px; }
+        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; }
         .label { position: absolute; font-size: 14px; color: #fff; text-align: center; font-weight: bold; width: 60px; }
+        .key-hint { font-size: 10px; color: #888; display: block; margin-top: 2px; }
         
-        /* 2 Status Lights (F5, F6) */
+        /* Lights (T, Z) */
         .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; }
         .light.green-on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
         .light.gray-off { background: #444; }
         .light.red-on { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
 
-        /* 4 Vertical Scales (F1-F4) */
+        /* Scales (Q, W, E, R) */
         .scale-track { width: 14px; height: 250px; border: 1px solid #666; position: absolute; background: #111; }
-        .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #888; border-bottom: 2px solid #888; left: -6px; top: 105px; pointer-events: none; }
+        .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #888; border-bottom: 2px solid #888; left: -6px; top: 105px; }
         .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.1s linear; }
-        
-        /* Feedback Rectangle */
-        .feedback-rect { width: 30px; height: 10px; background: yellow; position: absolute; bottom: -20px; left: -9px; display: none; }
+        .feedback-rect { width: 30px; height: 10px; background: yellow; position: absolute; bottom: -25px; left: -9px; display: none; }
     </style>
 </head>
 <body>
 
 <div id="container">
-    <div id="L_F5" class="light green-on" style="top: 30px; left: 180px;"></div>
-    <div id="L_F6" class="light gray-off" style="top: 30px; left: 260px;"></div>
-    <div class="label" style="top: 75px; left: 180px;">F5</div>
-    <div class="label" style="top: 75px; left: 260px;">F6</div>
+    <div id="L_T" class="light green-on" style="top: 30px; left: 205px;"></div>
+    <div id="L_Z" class="light gray-off" style="top: 30px; left: 285px;"></div>
+    <div class="label" style="top: 75px; left: 205px;">T<span class="key-hint">(Light 1)</span></div>
+    <div class="label" style="top: 75px; left: 285px;">Z<span class="key-hint">(Light 2)</span></div>
 
-    <div id="track1" class="scale-track" style="top: 130px; left: 80px;"><div class="central-zone"></div><div id="P1" class="pointer" style="top: 123px;"></div><div id="FB1" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">F1</div></div>
-    <div id="track2" class="scale-track" style="top: 130px; left: 180px;"><div class="central-zone"></div><div id="P2" class="pointer" style="top: 123px;"></div><div id="FB2" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">F2</div></div>
-    <div id="track3" class="scale-track" style="top: 130px; left: 280px;"><div class="central-zone"></div><div id="P3" class="pointer" style="top: 123px;"></div><div id="FB3" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">F3</div></div>
-    <div id="track4" class="scale-track" style="top: 130px; left: 380px;"><div class="central-zone"></div><div id="P4" class="pointer" style="top: 123px;"></div><div id="FB4" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">F4</div></div>
+    <div id="trackQ" class="scale-track" style="top: 130px; left: 80px;"><div class="central-zone"></div><div id="PQ" class="pointer" style="top: 123px;"></div><div id="FBQ" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">Q</div></div>
+    <div id="trackW" class="scale-track" style="top: 130px; left: 180px;"><div class="central-zone"></div><div id="PW" class="pointer" style="top: 123px;"></div><div id="FBW" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">W</div></div>
+    <div id="trackE" class="scale-track" style="top: 130px; left: 280px;"><div class="central-zone"></div><div id="PE" class="pointer" style="top: 123px;"></div><div id="FBE" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">E</div></div>
+    <div id="trackR" class="scale-track" style="top: 130px; left: 380px;"><div class="central-zone"></div><div id="PR" class="pointer" style="top: 123px;"></div><div id="FBR" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">R</div></div>
 </div>
 
 <script>
-    const FAILURE_TIMEOUT = 15000; // 15 seconds to respond
-    const FEEDBACK_DURATION = 1500; // 1.5 seconds
+    const FAILURE_TIMEOUT = 15000;
+    const FEEDBACK_DURATION = 1500;
+    const keyMap = { 'Q':0, 'W':1, 'E':2, 'R':3, 'T':'T', 'Z':'Z' };
 
     let state = {
-        F5: "NORMAL", // NORMAL (Green) or ABNORMAL (Gray)
-        F6: "NORMAL", // NORMAL (Gray) or ABNORMAL (Red)
+        T: "NORMAL", Z: "NORMAL",
         scales: [50, 50, 50, 50],
         offsets: [0, 0, 0, 0],
-        anomalies: {} // Stores timestamps of when an anomaly started
+        anomalies: {} // Stores start time: { 'Q': 164500... }
     };
+
+    function sendDataToLabvanced(payload) {
+        // This is the bridge to Labvanced
+        window.parent.postMessage({
+            source: 'SYSMON_TASK',
+            ...payload
+        }, '*');
+        console.log("Sent to Labvanced:", payload);
+    }
 
     function update() {
         const now = Date.now();
-
-        // 1. Update Scales (Jitter + Offset)
+        
+        // Update scale positions
         for(let i=0; i<4; i++) {
             let jitter = (Math.random() - 0.5) * 5;
-            let currentPos = 50 + state.offsets[i] + jitter;
-            state.scales[i] = Math.max(5, Math.min(95, currentPos));
+            state.scales[i] = Math.max(5, Math.min(95, 50 + state.offsets[i] + jitter));
         }
 
-        // 2. Randomly Trigger Anomalies
-        if (Math.random() < 0.005) {
-            let r = Math.floor(Math.random() * 6) + 1; // 1-6
-            if (r === 5 && state.F5 === "NORMAL") { state.F5 = "ABNORMAL"; state.anomalies['F5'] = now; }
-            if (r === 6 && state.F6 === "NORMAL") { state.F6 = "ABNORMAL"; state.anomalies['F6'] = now; }
-            if (r <= 4 && state.offsets[r-1] === 0) { 
-                state.offsets[r-1] = Math.random() > 0.5 ? 35 : -35; 
-                state.anomalies['F'+r] = now;
+        // Random Trigger
+        if (Math.random() < 0.006) {
+            const keys = ['Q','W','E','R','T','Z'];
+            const target = keys[Math.floor(Math.random() * keys.length)];
+            
+            if (!state.anomalies[target]) {
+                if (target === 'T') state.T = "ABNORMAL";
+                else if (target === 'Z') state.Z = "ABNORMAL";
+                else state.offsets[keyMap[target]] = Math.random() > 0.5 ? 35 : -35;
+                
+                state.anomalies[target] = now;
             }
         }
 
-        // 3. Check for Timeouts (Human Failure)
+        // Check for Failures (Misses)
         for (let key in state.anomalies) {
             if (now - state.anomalies[key] > FAILURE_TIMEOUT) {
-                resetTask(key, "FAILURE");
+                sendDataToLabvanced({ type: 'MISS', task: key, rt: FAILURE_TIMEOUT });
+                forceReset(key);
             }
         }
-
         render();
     }
 
-    function resetTask(id, type) {
-        if (id === 'F5') state.F5 = "NORMAL";
-        else if (id === 'F6') state.F6 = "NORMAL";
-        else {
-            let idx = parseInt(id.replace('F','')) - 1;
-            state.offsets[idx] = 0;
-            if (type === "HIT") showFeedback(idx + 1);
-        }
-        delete state.anomalies[id];
-        
-        // Log to Labvanced
-        window.parent.postMessage({ event: type, task: id, time: Date.now() }, '*');
-    }
-
-    function showFeedback(scaleNum) {
-        const fb = document.getElementById(`FB${scaleNum}`);
-        fb.style.display = 'block';
-        setTimeout(() => { fb.style.display = 'none'; }, FEEDBACK_DURATION);
+    function forceReset(key) {
+        if (key === 'T') state.T = "NORMAL";
+        else if (key === 'Z') state.Z = "NORMAL";
+        else state.offsets[keyMap[key]] = 0;
+        delete state.anomalies[key];
     }
 
     function render() {
-        document.getElementById('L_F5').className = `light ${state.F5 === "NORMAL" ? "green-on" : "gray-off"}`;
-        document.getElementById('L_F6').className = `light ${state.F6 === "NORMAL" ? "gray-off" : "red-on"}`;
-        for(let i=1; i<=4; i++) {
-            document.getElementById(`P${i}`).style.top = (state.scales[i-1] / 100 * 250 - 2) + 'px';
-        }
+        document.getElementById('L_T').className = `light ${state.T === "NORMAL" ? "green-on" : "gray-off"}`;
+        document.getElementById('L_Z').className = `light ${state.Z === "NORMAL" ? "gray-off" : "red-on"}`;
+        ['Q','W','E','R'].forEach((k, i) => {
+            document.getElementById(`P${k}`).style.top = (state.scales[i] / 100 * 250 - 2) + 'px';
+        });
     }
 
     window.addEventListener('keydown', (e) => {
-        // Prevent F-key defaults
-        if (e.key.startsWith('F')) e.preventDefault();
-        
         const key = e.key.toUpperCase();
-        if (key === 'F5' && state.F5 === "ABNORMAL") resetTask('F5', "HIT");
-        if (key === 'F6' && state.F6 === "ABNORMAL") resetTask('F6', "HIT");
-        
-        if (['F1','F2','F3','F4'].includes(key)) {
-            let idx = parseInt(key.replace('F','')) - 1;
-            if (Math.abs(state.offsets[idx]) > 10) resetTask(key, "HIT");
-        }
-    });
+        if (!keyMap.hasOwnProperty(key)) return;
 
-    setInterval(update, 100);
-</script>
-</body>
-</html>
+        const now = Date.now();
+        if (state.anomalies[key]) {
+            const rt = now - state.anomalies[key];
+            sendDataToLabvanced({ type: 'HIT', task: key, rt: rt });
