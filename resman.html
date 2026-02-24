@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RESMAN - Resource Management</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: Arial; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #container { position: relative; width: 600px; height: 500px; background: #000; border: 2px solid #444; cursor: pointer; }
+        #focus-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; }
+        
+        /* Tanks */
+        .tank { position: absolute; border: 2px solid #aaa; background: #222; width: 60px; overflow: hidden; }
+        .fuel { position: absolute; bottom: 0; width: 100%; background: #3498db; transition: height 0.1s linear; }
+        .label { position: absolute; font-size: 12px; font-weight: bold; width: 60px; text-align: center; }
+        .target-line { position: absolute; width: 100%; border-top: 2px dashed red; top: 50%; } /* Target at 2500 */
+        
+        /* Pumps */
+        .pump { position: absolute; width: 25px; height: 25px; border: 1px solid #777; font-size: 10px; display: flex; align-items: center; justify-content: center; background: #333; }
+        .pump.on { background: #00ff00; color: #000; }
+        .pump.failed { background: #ff0000; color: #fff; }
+    </style>
+</head>
+<body onload="window.focus();">
+
+<div id="container" onclick="this.focus(); document.getElementById('focus-overlay').style.display='none';">
+    <div id="focus-overlay"><div>RESMAN: CLICK TO START<br>Use Keys 1-8 to toggle pumps</div></div>
+
+    <div id="tankA" class="tank" style="top: 50px; left: 150px; height: 150px;"><div id="fuelA" class="fuel"></div><div class="target-line"></div></div>
+    <div id="tankB" class="tank" style="top: 50px; left: 390px; height: 150px;"><div id="fuelB" class="fuel"></div><div class="target-line"></div></div>
+    <div class="label" style="top: 205px; left: 150px;">A</div><div class="label" style="top: 205px; left: 390px;">B</div>
+
+    <div id="tankC" class="tank" style="top: 250px; left: 150px; height: 100px;"><div id="fuelC" class="fuel"></div></div>
+    <div id="tankD" class="tank" style="top: 250px; left: 390px; height: 100px;"><div id="fuelD" class="fuel"></div></div>
+    <div class="label" style="top: 355px; left: 150px;">C</div><div class="label" style="top: 355px; left: 390px;">D</div>
+
+    <div id="tankE" class="tank" style="top: 400px; left: 100px; height: 60px;"><div class="fuel" style="height:100%"></div></div>
+    <div id="tankF" class="tank" style="top: 400px; left: 440px; height: 60px;"><div class="fuel" style="height:100%"></div></div>
+    <div class="label" style="top: 465px; left: 100px;">E</div><div class="label" style="top: 465px; left: 440px;">F</div>
+
+    <div id="p1" class="pump" style="top: 210px; left: 167px;">1</div>
+    <div id="p2" class="pump" style="top: 360px; left: 167px;">2</div>
+    <div id="p3" class="pump" style="top: 210px; left: 407px;">3</div>
+    <div id="p4" class="pump" style="top: 360px; left: 407px;">4</div>
+    <div id="p5" class="pump" style="top: 215px; left: 287px;">5</div>
+    <div id="p6" class="pump" style="top: 260px; left: 287px;">6</div>
+    <div id="p7" class="pump" style="top: 100px; left: 287px;">7</div>
+    <div id="p8" class="pump" style="top: 145px; left: 287px;">8</div>
+</div>
+
+<script>
+    let levels = { A: 2500, B: 2500, C: 2000, D: 2000 };
+    let pumps = { 1: false, 2: false, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false };
+    let failedPumps = {};
+
+    function update() {
+        // Consumption
+        levels.A -= 1.3;
+        levels.B -= 1.3;
+
+        // Pump Flow Logic (Units per update)
+        if(pumps[1] && levels.C > 0) { levels.A += 1.8; levels.C -= 1.8; }
+        if(pumps[2]) { levels.C += 1.2; } // From E
+        if(pumps[3] && levels.D > 0) { levels.B += 1.8; levels.D -= 1.8; }
+        if(pumps[4]) { levels.D += 1.2; } // From F
+        if(pumps[5] && levels.D > 0) { levels.C += 1.0; levels.D -= 1.0; }
+        if(pumps[6] && levels.C > 0) { levels.D += 1.0; levels.C -= 1.0; }
+        if(pumps[7] && levels.B > 0) { levels.A += 1.0; levels.B -= 1.0; }
+        if(pumps[8] && levels.A > 0) { levels.B += 1.0; levels.A -= 1.0; }
+
+        // Clamp levels
+        for(let t in levels) levels[t] = Math.max(0, Math.min(t === 'A' || t === 'B' ? 4000 : 3000, levels[t]));
+
+        // Random Pump Failure
+        if(Math.random() < 0.002) {
+            let p = Math.floor(Math.random()*8)+1;
+            failedPumps[p] = Date.now();
+            pumps[p] = false;
+        }
+        
+        // Auto-fix failures after 15s
+        for(let p in failedPumps) {
+            if(Date.now() - failedPumps[p] > 15000) delete failedPumps[p];
+        }
+
+        render();
+    }
+
+    function render() {
+        document.getElementById('fuelA').style.height = (levels.A / 4000 * 100) + '%';
+        document.getElementById('fuelB').style.height = (levels.B / 4000 * 100) + '%';
+        document.getElementById('fuelC').style.height = (levels.C / 3000 * 100) + '%';
+        document.getElementById('fuelD').style.height = (levels.D / 3000 * 100) + '%';
+
+        for(let i=1; i<=8; i++) {
+            let el = document.getElementById('p'+i);
+            el.className = 'pump' + (pumps[i] ? ' on' : '') + (failedPumps[i] ? ' failed' : '');
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        let p = e.key;
+        if(p >= 1 && p <= 8 && !failedPumps[p]) {
+            pumps[p] = !pumps[p];
+            window.parent.postMessage({source: 'RESMAN', pump: p, status: pumps[p], levels: levels}, '*');
+        }
+    });
+
+    setInterval(update, 100);
+</script>
+</body>
+</html>
