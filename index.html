@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SYSMON - Labvanced Optimized</title>
+    <title>SYSMON - Fixed & Labvanced Ready</title>
     <style>
         body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; }
+        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; border-radius: 8px; }
         .label { position: absolute; font-size: 14px; color: #fff; text-align: center; font-weight: bold; width: 60px; }
-        .key-hint { font-size: 10px; color: #888; display: block; margin-top: 2px; }
+        .key-hint { font-size: 11px; color: #00ff00; display: block; margin-top: 2px; }
         
         /* Lights (T, Z) */
-        .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; }
-        .light.green-on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-        .light.gray-off { background: #444; }
-        .light.red-on { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; border-radius: 4px; }
+        .light.green-on { background: #00ff00; box-shadow: 0 0 15px #00ff00; border-color: #fff; }
+        .light.gray-off { background: #333; border-color: #555; }
+        .light.red-on { background: #ff0000; box-shadow: 0 0 15px #ff0000; border-color: #fff; }
 
         /* Scales (Q, W, E, R) */
         .scale-track { width: 14px; height: 250px; border: 1px solid #666; position: absolute; background: #111; }
-        .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #888; border-bottom: 2px solid #888; left: -6px; top: 105px; }
-        .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.1s linear; }
-        .feedback-rect { width: 30px; height: 10px; background: yellow; position: absolute; bottom: -25px; left: -9px; display: none; }
+        .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #00ff00; border-bottom: 2px solid #00ff00; left: -6px; top: 105px; opacity: 0.5; }
+        .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.05s linear; z-index: 10; }
+        .feedback-rect { width: 30px; height: 12px; background: yellow; position: absolute; bottom: -30px; left: -9px; display: none; box-shadow: 0 0 8px yellow; }
     </style>
 </head>
 <body>
@@ -26,8 +26,8 @@
 <div id="container">
     <div id="L_T" class="light green-on" style="top: 30px; left: 205px;"></div>
     <div id="L_Z" class="light gray-off" style="top: 30px; left: 285px;"></div>
-    <div class="label" style="top: 75px; left: 205px;">T<span class="key-hint">(Light 1)</span></div>
-    <div class="label" style="top: 75px; left: 285px;">Z<span class="key-hint">(Light 2)</span></div>
+    <div class="label" style="top: 75px; left: 205px;">T<span class="key-hint">Light 1</span></div>
+    <div class="label" style="top: 75px; left: 285px;">Z<span class="key-hint">Light 2</span></div>
 
     <div id="trackQ" class="scale-track" style="top: 130px; left: 80px;"><div class="central-zone"></div><div id="PQ" class="pointer" style="top: 123px;"></div><div id="FBQ" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">Q</div></div>
     <div id="trackW" class="scale-track" style="top: 130px; left: 180px;"><div class="central-zone"></div><div id="PW" class="pointer" style="top: 123px;"></div><div id="FBW" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">W</div></div>
@@ -38,48 +38,41 @@
 <script>
     const FAILURE_TIMEOUT = 15000;
     const FEEDBACK_DURATION = 1500;
-    const keyMap = { 'Q':0, 'W':1, 'E':2, 'R':3, 'T':'T', 'Z':'Z' };
+    const keys = ['Q', 'W', 'E', 'R', 'T', 'Z'];
 
     let state = {
-        T: "NORMAL", Z: "NORMAL",
-        scales: [50, 50, 50, 50],
-        offsets: [0, 0, 0, 0],
-        anomalies: {} // Stores start time: { 'Q': 164500... }
+        T: "NORMAL", 
+        Z: "NORMAL",
+        scales: { Q: 50, W: 50, E: 50, R: 50 },
+        offsets: { Q: 0, W: 0, E: 0, R: 0 },
+        anomalies: {} 
     };
 
     function sendDataToLabvanced(payload) {
-        // This is the bridge to Labvanced
-        window.parent.postMessage({
-            source: 'SYSMON_TASK',
-            ...payload
-        }, '*');
-        console.log("Sent to Labvanced:", payload);
+        window.parent.postMessage({ source: 'SYSMON_TASK', ...payload }, '*');
     }
 
     function update() {
         const now = Date.now();
         
-        // Update scale positions
-        for(let i=0; i<4; i++) {
-            let jitter = (Math.random() - 0.5) * 5;
-            state.scales[i] = Math.max(5, Math.min(95, 50 + state.offsets[i] + jitter));
-        }
+        // 1. Update scale positions (Jitter + Offset)
+        ['Q', 'W', 'E', 'R'].forEach(k => {
+            let jitter = (Math.random() - 0.5) * 6;
+            state.scales[k] = Math.max(5, Math.min(95, 50 + state.offsets[k] + jitter));
+        });
 
-        // Random Trigger
-        if (Math.random() < 0.006) {
-            const keys = ['Q','W','E','R','T','Z'];
+        // 2. Randomly Trigger Anomaly (~every 3-5 seconds on average)
+        if (Math.random() < 0.008) {
             const target = keys[Math.floor(Math.random() * keys.length)];
-            
             if (!state.anomalies[target]) {
                 if (target === 'T') state.T = "ABNORMAL";
                 else if (target === 'Z') state.Z = "ABNORMAL";
-                else state.offsets[keyMap[target]] = Math.random() > 0.5 ? 35 : -35;
-                
+                else state.offsets[target] = Math.random() > 0.5 ? 38 : -38;
                 state.anomalies[target] = now;
             }
         }
 
-        // Check for Failures (Misses)
+        // 3. Check for Timeouts
         for (let key in state.anomalies) {
             if (now - state.anomalies[key] > FAILURE_TIMEOUT) {
                 sendDataToLabvanced({ type: 'MISS', task: key, rt: FAILURE_TIMEOUT });
@@ -92,23 +85,44 @@
     function forceReset(key) {
         if (key === 'T') state.T = "NORMAL";
         else if (key === 'Z') state.Z = "NORMAL";
-        else state.offsets[keyMap[key]] = 0;
+        else state.offsets[key] = 0;
         delete state.anomalies[key];
     }
 
     function render() {
+        // Render Lights
         document.getElementById('L_T').className = `light ${state.T === "NORMAL" ? "green-on" : "gray-off"}`;
         document.getElementById('L_Z').className = `light ${state.Z === "NORMAL" ? "gray-off" : "red-on"}`;
-        ['Q','W','E','R'].forEach((k, i) => {
-            document.getElementById(`P${k}`).style.top = (state.scales[i] / 100 * 250 - 2) + 'px';
+        
+        // Render Pointers
+        ['Q', 'W', 'E', 'R'].forEach(k => {
+            const el = document.getElementById(`P${k}`);
+            if(el) el.style.top = (state.scales[k] / 100 * 250 - 2) + 'px';
         });
     }
 
     window.addEventListener('keydown', (e) => {
         const key = e.key.toUpperCase();
-        if (!keyMap.hasOwnProperty(key)) return;
+        if (!keys.includes(key)) return;
 
         const now = Date.now();
         if (state.anomalies[key]) {
             const rt = now - state.anomalies[key];
             sendDataToLabvanced({ type: 'HIT', task: key, rt: rt });
+            
+            if (['Q', 'W', 'E', 'R'].includes(key)) {
+                const fb = document.getElementById(`FB${key}`);
+                fb.style.display = 'block';
+                setTimeout(() => fb.style.display = 'none', FEEDBACK_DURATION);
+            }
+            forceReset(key);
+        } else {
+            sendDataToLabvanced({ type: 'FALSE_ALARM', task: key, rt: 0 });
+        }
+    });
+
+    // Run simulation loop at 20Hz (every 50ms) for smoother jitter
+    setInterval(update, 50);
+</script>
+</body>
+</html>
