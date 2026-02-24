@@ -1,127 +1,185 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SYSMON - Labvanced Fixed</title>
+    <title>Integrated OpenMATB-Lite</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; border-radius: 8px; cursor: pointer; }
+        body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        #master-container { display: flex; gap: 20px; padding: 20px; background: #000; border: 3px solid #444; border-radius: 10px; position: relative; }
         
-        /* Focus Overlay */
-        #focus-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; }
+        #focus-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
         
-        .label { position: absolute; font-size: 14px; color: #fff; text-align: center; font-weight: bold; width: 60px; }
-        .key-hint { font-size: 11px; color: #00ff00; display: block; margin-top: 2px; }
-        .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; border-radius: 4px; }
-        .green-on { background: #00ff00; box-shadow: 0 0 15px #00ff00; border-color: #fff; }
-        .gray-off { background: #333; border-color: #555; }
-        .red-on { background: #ff0000; box-shadow: 0 0 15px #ff0000; border-color: #fff; }
-        .scale-track { width: 14px; height: 250px; border: 1px solid #666; position: absolute; background: #111; }
-        .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #00ff00; border-bottom: 2px solid #00ff00; left: -6px; top: 105px; opacity: 0.5; }
-        .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.05s linear; z-index: 10; }
-        .feedback-rect { width: 30px; height: 12px; background: yellow; position: absolute; bottom: -30px; left: -9px; display: none; box-shadow: 0 0 8px yellow; }
+        .section-title { font-size: 18px; color: #555; text-transform: uppercase; margin-bottom: 10px; text-align: center; border-bottom: 1px solid #333; }
+        .label { position: absolute; font-size: 12px; color: #fff; text-align: center; font-weight: bold; }
+        .key-hint { font-size: 10px; color: #00ff00; display: block; }
+
+        /* --- SYSMON STYLES --- */
+        #sysmon-panel { width: 400px; height: 450px; position: relative; border-right: 2px solid #333; padding-right: 20px;}
+        .light { width: 50px; height: 35px; border: 2px solid #333; position: absolute; border-radius: 4px; }
+        .green-on { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .gray-off { background: #333; }
+        .red-on { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        .scale-track { width: 12px; height: 220px; border: 1px solid #555; position: absolute; background: #111; }
+        .central-zone { position: absolute; width: 20px; height: 35px; border-top: 2px solid #00ff00; border-bottom: 2px solid #00ff00; left: -5px; top: 92px; opacity: 0.4; }
+        .pointer { width: 26px; height: 4px; background: #ffff00; position: absolute; left: -8px; z-index: 10; }
+        .feedback-rect { width: 26px; height: 10px; background: yellow; position: absolute; bottom: -25px; left: -8px; display: none; }
+
+        /* --- RESMAN STYLES --- */
+        #resman-panel { width: 500px; height: 450px; position: relative; }
+        .tank { position: absolute; border: 2px solid #888; background: #111; width: 55px; }
+        .fuel { position: absolute; bottom: 0; width: 100%; background: #3498db; }
+        .target-line { position: absolute; width: 100%; border-top: 2px dashed rgba(255,0,0,0.7); top: 50%; }
+        .pump { position: absolute; width: 22px; height: 22px; border: 1px solid #666; font-size: 10px; display: flex; align-items: center; justify-content: center; background: #222; cursor: default; }
+        .pump.on { background: #00ff00; color: #000; font-weight: bold; }
+        .pump.failed { background: #ff0000; color: #fff; }
     </style>
 </head>
-<body onload="window.focus();">
+<body>
 
-<div id="container" onclick="this.focus(); document.getElementById('focus-overlay').style.display='none';">
-    <div id="focus-overlay"><div>CLICK HERE TO START TASK<br>(Enables Keys)</div></div>
-    
-    <div id="L_T" class="light green-on" style="top: 30px; left: 205px;"></div>
-    <div id="L_Z" class="light gray-off" style="top: 30px; left: 285px;"></div>
-    <div class="label" style="top: 75px; left: 205px;">T<span class="key-hint">Light 1</span></div>
-    <div class="label" style="top: 75px; left: 285px;">Z<span class="key-hint">Light 2</span></div>
+<div id="master-container">
+    <div id="focus-overlay" onclick="this.style.display='none'; window.focus();">
+        <div>INTEGRATED MATB<br>CLICK TO START<br><br><small>SYSMON: Q,W,E,R,T,Z | RESMAN: 1-8</small></div>
+    </div>
 
-    <div id="trackQ" class="scale-track" style="top: 130px; left: 80px;"><div class="central-zone"></div><div id="PQ" class="pointer" style="top: 123px;"></div><div id="FBQ" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">Q</div></div>
-    <div id="trackW" class="scale-track" style="top: 130px; left: 180px;"><div class="central-zone"></div><div id="PW" class="pointer" style="top: 123px;"></div><div id="FBW" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">W</div></div>
-    <div id="trackE" class="scale-track" style="top: 130px; left: 280px;"><div class="central-zone"></div><div id="PE" class="pointer" style="top: 123px;"></div><div id="FBE" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">E</div></div>
-    <div id="trackR" class="scale-track" style="top: 130px; left: 380px;"><div class="central-zone"></div><div id="PR" class="pointer" style="top: 123px;"></div><div id="FBR" class="feedback-rect"></div><div class="label" style="top: 260px; left: -25px;">R</div></div>
+    <div id="sysmon-panel">
+        <div class="section-title">System Monitoring</div>
+        <div id="L_T" class="light green-on" style="top: 60px; left: 140px;"></div>
+        <div id="L_Z" class="light gray-off" style="top: 60px; left: 210px;"></div>
+        <div class="label" style="top: 100px; left: 140px; width:50px;">T<span class="key-hint">L1</span></div>
+        <div class="label" style="top: 100px; left: 210px; width:50px;">Z<span class="key-hint">L2</span></div>
+
+        <div id="trQ" class="scale-track" style="top: 160px; left: 60px;"><div class="central-zone"></div><div id="PQ" class="pointer" style="top: 108px;"></div><div id="FBQ" class="feedback-rect"></div><div class="label" style="top: 230px; left: -20px;">Q</div></div>
+        <div id="trW" class="scale-track" style="top: 160px; left: 150px;"><div class="central-zone"></div><div id="PW" class="pointer" style="top: 108px;"></div><div id="FBW" class="feedback-rect"></div><div class="label" style="top: 230px; left: -20px;">W</div></div>
+        <div id="trE" class="scale-track" style="top: 160px; left: 240px;"><div class="central-zone"></div><div id="PE" class="pointer" style="top: 108px;"></div><div id="FBE" class="feedback-rect"></div><div class="label" style="top: 230px; left: -20px;">E</div></div>
+        <div id="trR" class="scale-track" style="top: 160px; left: 330px;"><div class="central-zone"></div><div id="PR" class="pointer" style="top: 108px;"></div><div id="FBR" class="feedback-rect"></div><div class="label" style="top: 230px; left: -20px;">R</div></div>
+    </div>
+
+    <div id="resman-panel">
+        <div class="section-title">Resource Management</div>
+        <div class="tank" style="top: 60px; left: 130px; height: 140px;"><div id="fuelA" class="fuel"></div><div class="target-line"></div></div>
+        <div class="tank" style="top: 60px; left: 320px; height: 140px;"><div id="fuelB" class="fuel"></div><div class="target-line"></div></div>
+        <div class="label" style="top: 205px; left: 130px; width:55px;">A</div><div class="label" style="top: 205px; left: 320px; width:55px;">B</div>
+        
+        <div class="tank" style="top: 260px; left: 130px; height: 90px;"><div id="fuelC" class="fuel"></div></div>
+        <div class="tank" style="top: 260px; left: 320px; height: 90px;"><div id="fuelD" class="fuel"></div></div>
+        <div class="label" style="top: 355px; left: 130px; width:55px;">C</div><div class="label" style="top: 355px; left: 320px; width:55px;">D</div>
+
+        <div class="tank" style="top: 390px; left: 90px; height: 50px;"><div class="fuel" style="height:100%"></div><div class="label" style="top:15px; width:55px;">E</div></div>
+        <div class="tank" style="top: 390px; left: 360px; height: 50px;"><div class="fuel" style="height:100%"></div><div class="label" style="top:15px; width:55px;">F</div></div>
+
+        <div id="pm1" class="pump" style="top: 215px; left: 145px;">1</div><div id="pm2" class="pump" style="top: 360px; left: 145px;">2</div>
+        <div id="pm3" class="pump" style="top: 215px; left: 335px;">3</div><div id="pm4" class="pump" style="top: 360px; left: 335px;">4</div>
+        <div id="pm5" class="pump" style="top: 230px; left: 242px;">5</div><div id="pm6" class="pump" style="top: 280px; left: 242px;">6</div>
+        <div id="pm7" class="pump" style="top: 100px; left: 242px;">7</div><div id="pm8" class="pump" style="top: 150px; left: 242px;">8</div>
+    </div>
 </div>
 
 <script>
-    const FAILURE_TIMEOUT = 15000;
-    const FEEDBACK_DURATION = 1500;
-    const keys = ['Q', 'W', 'E', 'R', 'T', 'Z'];
+    // --- INITIAL STATE ---
+    const SYSMON_KEYS = ['Q','W','E','R','T','Z'];
+    const RESMAN_KEYS = ['1','2','3','4','5','6','7','8'];
+    
+    let sys = { T: "NORMAL", Z: "NORMAL", scales: {Q:50,W:50,E:50,R:50}, offsets: {Q:0,W:0,E:0,R:0}, anomalies: {} };
+    let res = { levels: {A:2500, B:2500, C:2000, D:2000}, pumps: {1:false,2:false,3:false,4:false,5:false,6:false,7:false,8:false}, failures: {} };
 
-    let state = {
-        T: "NORMAL", Z: "NORMAL",
-        scales: { Q: 50, W: 50, E: 50, R: 50 },
-        offsets: { Q: 0, W: 0, E: 0, R: 0 },
-        anomalies: {} 
-    };
-
-    // LOGGING FIX: Added console.log so you can see it in dev tools
-    function sendDataToLabvanced(payload) {
-        const data = { source: 'SYSMON_TASK', ...payload, timestamp: Date.now() };
-        console.log("Broadcasting to Labvanced:", data);
-        window.parent.postMessage(data, '*');
+    function sendData(payload) {
+        window.parent.postMessage({ source: 'MATB_INTEGRATED', ...payload, timestamp: Date.now() }, '*');
     }
 
+    // --- MAIN LOOP (50ms) ---
     function update() {
         const now = Date.now();
-        ['Q', 'W', 'E', 'R'].forEach(k => {
-            let jitter = (Math.random() - 0.5) * 6;
-            state.scales[k] = Math.max(5, Math.min(95, 50 + state.offsets[k] + jitter));
+
+        // 1. SYSMON LOGIC
+        SYSMON_KEYS.slice(0,4).forEach(k => {
+            sys.scales[k] = Math.max(5, Math.min(95, 50 + sys.offsets[k] + (Math.random()-0.5)*7));
         });
-
-        if (Math.random() < 0.008) {
-            const target = keys[Math.floor(Math.random() * keys.length)];
-            if (!state.anomalies[target]) {
-                if (target === 'T') state.T = "ABNORMAL";
-                else if (target === 'Z') state.Z = "ABNORMAL";
-                else state.offsets[target] = Math.random() > 0.5 ? 38 : -38;
-                state.anomalies[target] = now;
-                console.log("Anomaly Started:", target);
+        if (Math.random() < 0.007) {
+            let target = SYSMON_KEYS[Math.floor(Math.random()*6)];
+            if (!sys.anomalies[target]) {
+                if (target === 'T') sys.T = "ABNORMAL";
+                else if (target === 'Z') sys.Z = "ABNORMAL";
+                else sys.offsets[target] = (Math.random() > 0.5 ? 38 : -38);
+                sys.anomalies[target] = now;
+            }
+        }
+        for (let k in sys.anomalies) {
+            if (now - sys.anomalies[k] > 15000) {
+                sendData({ type: 'SYSMON_MISS', task: k });
+                resetSysmon(k);
             }
         }
 
-        for (let key in state.anomalies) {
-            if (now - state.anomalies[key] > FAILURE_TIMEOUT) {
-                sendDataToLabvanced({ type: 'MISS', task: key, rt: FAILURE_TIMEOUT });
-                forceReset(key);
-            }
+        // 2. RESMAN LOGIC
+        res.levels.A -= 0.7; res.levels.B -= 0.7; // Consumption
+        if(res.pumps[1] && res.levels.C > 0) { res.levels.A += 1.1; res.levels.C -= 1.1; }
+        if(res.pumps[2]) { res.levels.C += 0.8; }
+        if(res.pumps[3] && res.levels.D > 0) { res.levels.B += 1.1; res.levels.D -= 1.1; }
+        if(res.pumps[4]) { res.levels.D += 0.8; }
+        if(res.pumps[5] && res.levels.D > 0) { res.levels.C += 0.6; res.levels.D -= 0.6; }
+        if(res.pumps[6] && res.levels.C > 0) { res.levels.D += 0.6; res.levels.C -= 0.6; }
+        if(res.pumps[7] && res.levels.B > 0) { res.levels.A += 0.6; res.levels.B -= 0.6; }
+        if(res.pumps[8] && res.levels.A > 0) { res.levels.B += 0.6; res.levels.A -= 0.6; }
+        
+        for(let t in res.levels) res.levels[t] = Math.max(0, Math.min(t < 'C' ? 4000 : 3000, res.levels[t]));
+        
+        if(Math.random() < 0.003) {
+            let p = Math.floor(Math.random()*8)+1;
+            res.failures[p] = now; res.pumps[p] = false;
         }
+        for(let p in res.failures) if(now - res.failures[p] > 15000) delete res.failures[p];
+
         render();
     }
 
-    function forceReset(key) {
-        if (key === 'T') state.T = "NORMAL";
-        else if (key === 'Z') state.Z = "NORMAL";
-        else state.offsets[key] = 0;
-        delete state.anomalies[key];
+    function resetSysmon(key) {
+        if (key === 'T') sys.T = "NORMAL"; else if (key === 'Z') sys.Z = "NORMAL"; else sys.offsets[key] = 0;
+        delete sys.anomalies[key];
     }
 
     function render() {
-        document.getElementById('L_T').className = `light ${state.T === "NORMAL" ? "green-on" : "gray-off"}`;
-        document.getElementById('L_Z').className = `light ${state.Z === "NORMAL" ? "gray-off" : "red-on"}`;
-        ['Q', 'W', 'E', 'R'].forEach(k => {
-            document.getElementById(`P${k}`).style.top = (state.scales[k] / 100 * 250 - 2) + 'px';
+        // Render SYSMON
+        document.getElementById('L_T').className = `light ${sys.T === "NORMAL" ? "green-on" : "gray-off"}`;
+        document.getElementById('L_Z').className = `light ${sys.Z === "NORMAL" ? "gray-off" : "red-on"}`;
+        SYSMON_KEYS.slice(0,4).forEach(k => {
+            document.getElementById(`P${k}`).style.top = (sys.scales[k] / 100 * 220 - 2) + 'px';
         });
+
+        // Render RESMAN
+        document.getElementById('fuelA').style.height = (res.levels.A / 4000 * 100) + '%';
+        document.getElementById('fuelB').style.height = (res.levels.B / 4000 * 100) + '%';
+        document.getElementById('fuelC').style.height = (res.levels.C / 3000 * 100) + '%';
+        document.getElementById('fuelD').style.height = (res.levels.D / 3000 * 100) + '%';
+        for(let i=1; i<=8; i++) {
+            let el = document.getElementById('pm'+i);
+            el.className = 'pump' + (res.pumps[i] ? ' on' : '') + (res.failures[i] ? ' failed' : '');
+        }
     }
 
     window.addEventListener('keydown', (e) => {
         const key = e.key.toUpperCase();
-        if (!keys.includes(key)) return;
-
-        // Visual confirmation in console
-        console.log("Key Pressed:", key);
-
         const now = Date.now();
-        if (state.anomalies[key]) {
-            const rt = now - state.anomalies[key];
-            sendDataToLabvanced({ type: 'HIT', task: key, rt: rt });
-            if (['Q','W','E','R'].includes(key)) {
-                const fb = document.getElementById(`FB${key}`);
-                fb.style.display = 'block';
-                setTimeout(() => fb.style.display = 'none', FEEDBACK_DURATION);
+
+        // Handle SYSMON Inputs
+        if (SYSMON_KEYS.includes(key)) {
+            if (sys.anomalies[key]) {
+                sendData({ type: 'SYSMON_HIT', task: key, rt: now - sys.anomalies[key] });
+                if (key < 'T') { 
+                    const fb = document.getElementById(`FB${key}`); fb.style.display = 'block';
+                    setTimeout(() => fb.style.display = 'none', 1500);
+                }
+                resetSysmon(key);
+            } else sendData({ type: 'SYSMON_FALSE_ALARM', task: key });
+        }
+
+        // Handle RESMAN Inputs
+        if (RESMAN_KEYS.includes(key)) {
+            if (!res.failures[key]) {
+                res.pumps[key] = !res.pumps[key];
+                sendData({ type: 'RESMAN_TOGGLE', pump: key, status: res.pumps[key], levels: res.levels });
             }
-            forceReset(key);
-        } else {
-            sendDataToLabvanced({ type: 'FALSE_ALARM', task: key, rt: 0 });
         }
     });
 
-    // Auto-focus the window every second just in case focus is lost
-    setInterval(() => { if(document.getElementById('focus-overlay').style.display === 'none') window.focus(); }, 1000);
     setInterval(update, 50);
 </script>
 </body>
