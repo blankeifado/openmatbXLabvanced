@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SYSMON - Fixed & Labvanced Ready</title>
+    <title>SYSMON - Labvanced Fixed</title>
     <style>
         body { background: #1a1a1a; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; border-radius: 8px; }
+        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 550px; height: 450px; border-radius: 8px; cursor: pointer; }
+        
+        /* Focus Overlay */
+        #focus-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; text-align: center; }
+        
         .label { position: absolute; font-size: 14px; color: #fff; text-align: center; font-weight: bold; width: 60px; }
         .key-hint { font-size: 11px; color: #00ff00; display: block; margin-top: 2px; }
-        
-        /* Lights (T, Z) */
         .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; border-radius: 4px; }
-        .light.green-on { background: #00ff00; box-shadow: 0 0 15px #00ff00; border-color: #fff; }
-        .light.gray-off { background: #333; border-color: #555; }
-        .light.red-on { background: #ff0000; box-shadow: 0 0 15px #ff0000; border-color: #fff; }
-
-        /* Scales (Q, W, E, R) */
+        .green-on { background: #00ff00; box-shadow: 0 0 15px #00ff00; border-color: #fff; }
+        .gray-off { background: #333; border-color: #555; }
+        .red-on { background: #ff0000; box-shadow: 0 0 15px #ff0000; border-color: #fff; }
         .scale-track { width: 14px; height: 250px; border: 1px solid #666; position: absolute; background: #111; }
         .central-zone { position: absolute; width: 24px; height: 40px; border-top: 2px solid #00ff00; border-bottom: 2px solid #00ff00; left: -6px; top: 105px; opacity: 0.5; }
         .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.05s linear; z-index: 10; }
         .feedback-rect { width: 30px; height: 12px; background: yellow; position: absolute; bottom: -30px; left: -9px; display: none; box-shadow: 0 0 8px yellow; }
     </style>
 </head>
-<body>
+<body onload="window.focus();">
 
-<div id="container">
+<div id="container" onclick="this.focus(); document.getElementById('focus-overlay').style.display='none';">
+    <div id="focus-overlay"><div>CLICK HERE TO START TASK<br>(Enables Keys)</div></div>
+    
     <div id="L_T" class="light green-on" style="top: 30px; left: 205px;"></div>
     <div id="L_Z" class="light gray-off" style="top: 30px; left: 285px;"></div>
     <div class="label" style="top: 75px; left: 205px;">T<span class="key-hint">Light 1</span></div>
@@ -41,27 +43,26 @@
     const keys = ['Q', 'W', 'E', 'R', 'T', 'Z'];
 
     let state = {
-        T: "NORMAL", 
-        Z: "NORMAL",
+        T: "NORMAL", Z: "NORMAL",
         scales: { Q: 50, W: 50, E: 50, R: 50 },
         offsets: { Q: 0, W: 0, E: 0, R: 0 },
         anomalies: {} 
     };
 
+    // LOGGING FIX: Added console.log so you can see it in dev tools
     function sendDataToLabvanced(payload) {
-        window.parent.postMessage({ source: 'SYSMON_TASK', ...payload }, '*');
+        const data = { source: 'SYSMON_TASK', ...payload, timestamp: Date.now() };
+        console.log("Broadcasting to Labvanced:", data);
+        window.parent.postMessage(data, '*');
     }
 
     function update() {
         const now = Date.now();
-        
-        // 1. Update scale positions (Jitter + Offset)
         ['Q', 'W', 'E', 'R'].forEach(k => {
             let jitter = (Math.random() - 0.5) * 6;
             state.scales[k] = Math.max(5, Math.min(95, 50 + state.offsets[k] + jitter));
         });
 
-        // 2. Randomly Trigger Anomaly (~every 3-5 seconds on average)
         if (Math.random() < 0.008) {
             const target = keys[Math.floor(Math.random() * keys.length)];
             if (!state.anomalies[target]) {
@@ -69,10 +70,10 @@
                 else if (target === 'Z') state.Z = "ABNORMAL";
                 else state.offsets[target] = Math.random() > 0.5 ? 38 : -38;
                 state.anomalies[target] = now;
+                console.log("Anomaly Started:", target);
             }
         }
 
-        // 3. Check for Timeouts
         for (let key in state.anomalies) {
             if (now - state.anomalies[key] > FAILURE_TIMEOUT) {
                 sendDataToLabvanced({ type: 'MISS', task: key, rt: FAILURE_TIMEOUT });
@@ -90,14 +91,10 @@
     }
 
     function render() {
-        // Render Lights
         document.getElementById('L_T').className = `light ${state.T === "NORMAL" ? "green-on" : "gray-off"}`;
         document.getElementById('L_Z').className = `light ${state.Z === "NORMAL" ? "gray-off" : "red-on"}`;
-        
-        // Render Pointers
         ['Q', 'W', 'E', 'R'].forEach(k => {
-            const el = document.getElementById(`P${k}`);
-            if(el) el.style.top = (state.scales[k] / 100 * 250 - 2) + 'px';
+            document.getElementById(`P${k}`).style.top = (state.scales[k] / 100 * 250 - 2) + 'px';
         });
     }
 
@@ -105,12 +102,14 @@
         const key = e.key.toUpperCase();
         if (!keys.includes(key)) return;
 
+        // Visual confirmation in console
+        console.log("Key Pressed:", key);
+
         const now = Date.now();
         if (state.anomalies[key]) {
             const rt = now - state.anomalies[key];
             sendDataToLabvanced({ type: 'HIT', task: key, rt: rt });
-            
-            if (['Q', 'W', 'E', 'R'].includes(key)) {
+            if (['Q','W','E','R'].includes(key)) {
                 const fb = document.getElementById(`FB${key}`);
                 fb.style.display = 'block';
                 setTimeout(() => fb.style.display = 'none', FEEDBACK_DURATION);
@@ -121,7 +120,8 @@
         }
     });
 
-    // Run simulation loop at 20Hz (every 50ms) for smoother jitter
+    // Auto-focus the window every second just in case focus is lost
+    setInterval(() => { if(document.getElementById('focus-overlay').style.display === 'none') window.focus(); }, 1000);
     setInterval(update, 50);
 </script>
 </body>
