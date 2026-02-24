@@ -1,111 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>OpenMATB-Lite: SYSMON</title>
+    <title>OpenMATB SYSMON (Corrected)</title>
     <style>
-        body { background: #222; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #container { border: 2px solid #555; padding: 20px; background: #000; position: relative; width: 600px; height: 400px; }
-        .label { position: absolute; font-size: 12px; color: #aaa; text-align: center; }
+        body { background: #1a1a1a; color: white; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #container { border: 2px solid #444; padding: 20px; background: #000; position: relative; width: 500px; height: 450px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .label { position: absolute; font-size: 14px; color: #00ff00; text-align: center; font-weight: bold; }
         
-        /* Lights Style */
-        .light { width: 50px; height: 30px; border: 2px solid #444; position: absolute; transition: background 0.1s; }
-        .light.off { background: #111; }
-        .light.green { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-        .light.red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        /* 2 Status Lights at the Top */
+        .light { width: 60px; height: 40px; border: 2px solid #333; position: absolute; }
+        .light.green { background: #006600; border-color: #00ff00; } /* Normal: Green ON */
+        .light.red { background: #660000; border-color: #ff0000; }   /* Normal: Red OFF */
+        .light.active-green { background: #00ff00; box-shadow: 0 0 15px #00ff00; }
+        .light.active-red { background: #ff0000; box-shadow: 0 0 15px #ff0000; }
+        .light-off { background: #111; border-color: #333; }
 
-        /* Scale Style */
-        .scale-container { width: 30px; height: 200px; border: 1px solid #777; position: absolute; background: linear-gradient(to bottom, #222 45%, #555 45%, #555 55%, #222 55%); }
-        .pointer { width: 40px; height: 4px; background: cyan; position: absolute; left: -5px; box-shadow: 0 0 5px cyan; }
+        /* 4 Vertical Scales */
+        .scale-track { width: 12px; height: 250px; border: 1px solid #666; position: absolute; background: #111; }
+        .scale-mid { position: absolute; width: 24px; height: 2px; background: #888; left: -6px; top: 124px; }
+        .pointer { width: 30px; height: 4px; background: #ffff00; position: absolute; left: -9px; transition: top 0.1s linear; }
     </style>
 </head>
 <body>
 
 <div id="container">
-    <div id="L1" class="light green" style="top: 20px; left: 50px;"></div>
-    <div id="L2" class="light off" style="top: 20px; left: 120px;"></div>
-    <div id="L3" class="light off" style="top: 20px; left: 430px;"></div>
-    <div id="L4" class="light green" style="top: 20px; left: 500px;"></div>
-    
-    <div class="label" style="top: 55px; left: 50px; width: 50px;">F1</div>
-    <div class="label" style="top: 55px; left: 120px; width: 50px;">F2</div>
-    <div class="label" style="top: 55px; left: 430px; width: 50px;">F3</div>
-    <div class="label" style="top: 55px; left: 500px; width: 50px;">F4</div>
+    <div id="L1" class="light active-green" style="top: 30px; left: 160px;"></div>
+    <div id="L2" class="light-off" style="top: 30px; left: 280px;"></div>
+    <div class="label" style="top: 75px; left: 160px; width: 60px;">F1</div>
+    <div class="label" style="top: 75px; left: 280px; width: 60px;">F2</div>
 
-    <div class="scale-container" style="top: 120px; left: 150px;">
-        <div id="S1" class="pointer" style="top: 98px;"></div>
-    </div>
-    <div class="scale-container" style="top: 120px; left: 420px;">
-        <div id="S2" class="pointer" style="top: 98px;"></div>
-    </div>
+    <div id="track1" class="scale-track" style="top: 130px; left: 100px;"><div class="scale-mid"></div><div id="P1" class="pointer" style="top: 123px;"></div></div>
+    <div id="track2" class="scale-track" style="top: 130px; left: 200px;"><div class="scale-mid"></div><div id="P2" class="pointer" style="top: 123px;"></div></div>
+    <div id="track3" class="scale-track" style="top: 130px; left: 300px;"><div class="scale-mid"></div><div id="P3" class="pointer" style="top: 123px;"></div></div>
+    <div id="track4" class="scale-track" style="top: 130px; left: 400px;"><div class="scale-mid"></div><div id="P4" class="pointer" style="top: 123px;"></div></div>
     
-    <div class="label" style="top: 330px; left: 140px; width: 50px;">F5</div>
-    <div class="label" style="top: 330px; left: 410px; width: 50px;">F6</div>
+    <div class="label" style="top: 390px; left: 80px; width: 50px;">F3</div>
+    <div class="label" style="top: 390px; left: 180px; width: 50px;">F4</div>
+    <div class="label" style="top: 390px; left: 280px; width: 50px;">F5</div>
+    <div class="label" style="top: 390px; left: 380px; width: 50px;">F6</div>
 </div>
 
 <script>
-    // State Management
+    // State: 0-100 scale, 50 is center.
     let state = {
-        L1: true, L2: false, L3: false, L4: true, // true = normal
-        S1: 50, S2: 50, // 0-100 range
-        lastUpdate: Date.now()
+        L1: true,  // true = Green is ON (Normal)
+        L2: false, // false = Red is OFF (Normal)
+        scales: [50, 50, 50, 50],
+        offsets: [0, 0, 0, 0] // Drifts for anomalies
     };
 
-    // Simulation Loop (60fps)
-    function loop() {
-        // Drift the scales slightly (random walk)
-        state.S1 += (Math.random() - 0.5) * 2;
-        state.S2 += (Math.random() - 0.5) * 2;
+    function update() {
+        // Normal "Jitter" for scales
+        for(let i=0; i<4; i++) {
+            let jitter = (Math.random() - 0.5) * 4;
+            let currentPos = 50 + state.offsets[i] + jitter;
+            state.scales[i] = Math.max(0, Math.min(100, currentPos));
+        }
 
-        // Anomaly Logic (Randomly break things every ~5 seconds)
-        if (Math.random() < 0.005) triggerAnomaly();
-
+        // Randomly trigger anomalies
+        if (Math.random() < 0.003) {
+            let r = Math.floor(Math.random() * 6);
+            if (r === 0) state.L1 = false; // Green goes OFF
+            if (r === 1) state.L2 = true;  // Red goes ON
+            if (r >= 2) state.offsets[r-2] = (Math.random() > 0.5 ? 40 : -40); // Scale drifts
+        }
         render();
-        requestAnimationFrame(loop);
-    }
-
-    function triggerAnomaly() {
-        const rand = Math.floor(Math.random() * 6) + 1;
-        if (rand <= 4) state[`L${rand}`] = !state[`L${rand}`];
-        else state[`S${rand-4}`] += (Math.random() > 0.5 ? 40 : -40);
     }
 
     function render() {
-        // Render Lights
-        for(let i=1; i<=4; i++) {
-            const el = document.getElementById(`L${i}`);
-            const isNormal = state[`L${i}`];
-            if (i === 1 || i === 4) el.className = isNormal ? 'light green' : 'light off';
-            else el.className = isNormal ? 'light off' : 'light red';
+        // Lights: F1 (Normal=Green), F2 (Normal=Red Off)
+        document.getElementById('L1').className = state.L1 ? 'light active-green' : 'light-off';
+        document.getElementById('L2').className = state.L2 ? 'light active-red' : 'light-off';
+
+        // Scales
+        for(let i=0; i<4; i++) {
+            // Map 0-100 to 0-246px top value
+            let pixelPos = (state.scales[i] / 100) * 246;
+            document.getElementById(`P${i+1}`).style.top = pixelPos + 'px';
         }
-        // Render Scales
-        document.getElementById('S1').style.top = Math.max(0, Math.min(196, (state.S1/100)*200)) + 'px';
-        document.getElementById('S2').style.top = Math.max(0, Math.min(196, (state.S2/100)*200)) + 'px';
     }
 
-    // Input Handling
     window.addEventListener('keydown', (e) => {
         const key = e.key.toUpperCase();
-        let correct = false;
+        let hit = false;
 
-        if (key === 'F1') { if(!state.L1) correct = true; state.L1 = true; }
-        if (key === 'F2') { if(state.L2) correct = true; state.L2 = false; }
-        if (key === 'F3') { if(state.L3) correct = true; state.L3 = false; }
-        if (key === 'F4') { if(!state.L4) correct = true; state.L4 = true; }
-        if (key === 'F5') { if(Math.abs(state.S1 - 50) > 20) correct = true; state.S1 = 50; }
-        if (key === 'F6') { if(Math.abs(state.S2 - 50) > 20) correct = true; state.S2 = 50; }
+        if (key === 'F1' && !state.L1) { state.L1 = true; hit = true; }
+        if (key === 'F2' && state.L2) { state.L2 = false; hit = true; }
+        if (key === 'F3') { if(Math.abs(state.offsets[0]) > 10) hit = true; state.offsets[0] = 0; }
+        if (key === 'F4') { if(Math.abs(state.offsets[1]) > 10) hit = true; state.offsets[1] = 0; }
+        if (key === 'F5') { if(Math.abs(state.offsets[2]) > 10) hit = true; state.offsets[2] = 0; }
+        if (key === 'F6') { if(Math.abs(state.offsets[3]) > 10) hit = true; state.offsets[3] = 0; }
 
-        if (correct) {
-            // Send data to Labvanced
-            window.parent.postMessage({
-                type: 'event',
-                task: 'SYSMON',
-                key: key,
-                timestamp: Date.now()
-            }, '*');
+        if (hit) {
+            window.parent.postMessage({ type: 'MATB_HIT', key: key, time: Date.now() }, '*');
         }
     });
 
-    loop();
+    setInterval(update, 100);
 </script>
 </body>
 </html>
