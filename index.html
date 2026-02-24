@@ -84,12 +84,12 @@
         const key = e.key.toUpperCase();
         let hit = false;
 
-        if (key === 'F1' && !state.L1) { state.L1 = true; hit = true; }
-        if (key === 'F2' && state.L2) { state.L2 = false; hit = true; }
-        if (key === 'F3') { if(Math.abs(state.offsets[0]) > 10) hit = true; state.offsets[0] = 0; }
-        if (key === 'F4') { if(Math.abs(state.offsets[1]) > 10) hit = true; state.offsets[1] = 0; }
-        if (key === 'F5') { if(Math.abs(state.offsets[2]) > 10) hit = true; state.offsets[2] = 0; }
-        if (key === 'F6') { if(Math.abs(state.offsets[3]) > 10) hit = true; state.offsets[3] = 0; }
+        if (key === 'a' && !state.L1) { state.L1 = true; hit = true; }
+        if (key === 's' && state.L2) { state.L2 = false; hit = true; }
+        if (key === 'd') { if(Math.abs(state.offsets[0]) > 10) hit = true; state.offsets[0] = 0; }
+        if (key === 'f') { if(Math.abs(state.offsets[1]) > 10) hit = true; state.offsets[1] = 0; }
+        if (key === 'g') { if(Math.abs(state.offsets[2]) > 10) hit = true; state.offsets[2] = 0; }
+        if (key === 'h') { if(Math.abs(state.offsets[3]) > 10) hit = true; state.offsets[3] = 0; }
 
         if (hit) {
             window.parent.postMessage({ type: 'MATB_HIT', key: key, time: Date.now() }, '*');
