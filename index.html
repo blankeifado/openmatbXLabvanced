@@ -1,46 +1,111 @@
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>MATB-lite — RESMAN + SYSMON</title>
-    <link rel="stylesheet" href="style.css">
+    <title>OpenMATB-Lite: SYSMON</title>
+    <style>
+        body { background: #222; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #container { border: 2px solid #555; padding: 20px; background: #000; position: relative; width: 600px; height: 400px; }
+        .label { position: absolute; font-size: 12px; color: #aaa; text-align: center; }
+        
+        /* Lights Style */
+        .light { width: 50px; height: 30px; border: 2px solid #444; position: absolute; transition: background 0.1s; }
+        .light.off { background: #111; }
+        .light.green { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .light.red { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+
+        /* Scale Style */
+        .scale-container { width: 30px; height: 200px; border: 1px solid #777; position: absolute; background: linear-gradient(to bottom, #222 45%, #555 45%, #555 55%, #222 55%); }
+        .pointer { width: 40px; height: 4px; background: cyan; position: absolute; left: -5px; box-shadow: 0 0 5px cyan; }
+    </style>
 </head>
-
 <body>
-    <div id="app">
-        <header>
-            <h1>MATB-lite — RESMAN + SYSMON</h1>
-            <div id="status">Status: <span id="status-text">stopped</span></div>
-        </header>
 
-        <main>
-            <section id="resman" class="panel">
-                <h2>RESMAN (Resource Management)</h2>
-                <div id="tanks"></div>
-                <div id="pumps"></div>
-            </section>
+<div id="container">
+    <div id="L1" class="light green" style="top: 20px; left: 50px;"></div>
+    <div id="L2" class="light off" style="top: 20px; left: 120px;"></div>
+    <div id="L3" class="light off" style="top: 20px; left: 430px;"></div>
+    <div id="L4" class="light green" style="top: 20px; left: 500px;"></div>
+    
+    <div class="label" style="top: 55px; left: 50px; width: 50px;">F1</div>
+    <div class="label" style="top: 55px; left: 120px; width: 50px;">F2</div>
+    <div class="label" style="top: 55px; left: 430px; width: 50px;">F3</div>
+    <div class="label" style="top: 55px; left: 500px; width: 50px;">F4</div>
 
-
-            <section id="sysmon" class="panel">
-                <h2>SYSMON (System Monitoring)</h2>
-                <div id="gauges"></div>
-                <div id="sysmon-buttons"></div>
-            </section>
-        </main>
-
-        <footer>
-            <!--<button id="start-btn">Start</button>
-            <button id="stop-btn">Stop</button>
-            <div id="log-area"></div> -->
-        </footer>
+    <div class="scale-container" style="top: 120px; left: 150px;">
+        <div id="S1" class="pointer" style="top: 98px;"></div>
     </div>
+    <div class="scale-container" style="top: 120px; left: 420px;">
+        <div id="S2" class="pointer" style="top: 98px;"></div>
+    </div>
+    
+    <div class="label" style="top: 330px; left: 140px; width: 50px;">F5</div>
+    <div class="label" style="top: 330px; left: 410px; width: 50px;">F6</div>
+</div>
 
-    <script src="main.js"></script>
-    <script src="resman.js"></script>
-    <script src="sysmon.js"></script>
-    <script src="labvanced_listener.js"></script>
+<script>
+    // State Management
+    let state = {
+        L1: true, L2: false, L3: false, L4: true, // true = normal
+        S1: 50, S2: 50, // 0-100 range
+        lastUpdate: Date.now()
+    };
+
+    // Simulation Loop (60fps)
+    function loop() {
+        // Drift the scales slightly (random walk)
+        state.S1 += (Math.random() - 0.5) * 2;
+        state.S2 += (Math.random() - 0.5) * 2;
+
+        // Anomaly Logic (Randomly break things every ~5 seconds)
+        if (Math.random() < 0.005) triggerAnomaly();
+
+        render();
+        requestAnimationFrame(loop);
+    }
+
+    function triggerAnomaly() {
+        const rand = Math.floor(Math.random() * 6) + 1;
+        if (rand <= 4) state[`L${rand}`] = !state[`L${rand}`];
+        else state[`S${rand-4}`] += (Math.random() > 0.5 ? 40 : -40);
+    }
+
+    function render() {
+        // Render Lights
+        for(let i=1; i<=4; i++) {
+            const el = document.getElementById(`L${i}`);
+            const isNormal = state[`L${i}`];
+            if (i === 1 || i === 4) el.className = isNormal ? 'light green' : 'light off';
+            else el.className = isNormal ? 'light off' : 'light red';
+        }
+        // Render Scales
+        document.getElementById('S1').style.top = Math.max(0, Math.min(196, (state.S1/100)*200)) + 'px';
+        document.getElementById('S2').style.top = Math.max(0, Math.min(196, (state.S2/100)*200)) + 'px';
+    }
+
+    // Input Handling
+    window.addEventListener('keydown', (e) => {
+        const key = e.key.toUpperCase();
+        let correct = false;
+
+        if (key === 'F1') { if(!state.L1) correct = true; state.L1 = true; }
+        if (key === 'F2') { if(state.L2) correct = true; state.L2 = false; }
+        if (key === 'F3') { if(state.L3) correct = true; state.L3 = false; }
+        if (key === 'F4') { if(!state.L4) correct = true; state.L4 = true; }
+        if (key === 'F5') { if(Math.abs(state.S1 - 50) > 20) correct = true; state.S1 = 50; }
+        if (key === 'F6') { if(Math.abs(state.S2 - 50) > 20) correct = true; state.S2 = 50; }
+
+        if (correct) {
+            // Send data to Labvanced
+            window.parent.postMessage({
+                type: 'event',
+                task: 'SYSMON',
+                key: key,
+                timestamp: Date.now()
+            }, '*');
+        }
+    });
+
+    loop();
+</script>
 </body>
-
 </html>
